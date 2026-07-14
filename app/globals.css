@@ -397,6 +397,14 @@ select:disabled {
   margin: 6px 0 0;
 }
 
+.notificationActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .linkButton {
   color: var(--blue);
   background: transparent;

@@ -24,3 +24,22 @@ export async function GET(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ notifications: data, page, pageSize, total: count ?? 0 });
 }
+
+export async function DELETE(request: Request) {
+  const user = await readSessionUser();
+  if (!user) return NextResponse.json({ error: "ログインしてください。" }, { status: 401 });
+
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "削除する履歴を指定してください。" }, { status: 400 });
+
+  const supabase = createSupabaseServiceClient();
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", id)
+    .eq("recipient_user_id", user.id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}

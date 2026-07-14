@@ -122,6 +122,27 @@ export default function HistoryWorkspace() {
     }
   }
 
+  async function deleteNotification(notification: NotificationItem) {
+    const ok = window.confirm("この履歴を削除しますか？測定データ本体は削除されません。");
+    if (!ok) return;
+
+    try {
+      await api<{ ok: boolean }>(`/api/notifications?id=${encodeURIComponent(notification.id)}`, { method: "DELETE" });
+      if (expandedSetId === notification.payload?.measurementSetId) setExpandedSetId(null);
+      setToast({ message: "履歴を削除しました。", tone: "success" });
+      const nextTotal = Math.max(notificationTotal - 1, 0);
+      const nextPageCount = Math.max(1, Math.ceil(nextTotal / notificationPageSize));
+      const nextPage = Math.min(notificationPage, nextPageCount);
+      if (nextPage !== notificationPage) {
+        setNotificationPage(nextPage);
+      } else {
+        await loadNotifications(useAllRows ? 1 : nextPage);
+      }
+    } catch (error) {
+      setToast({ message: errorMessage(error), tone: "error" });
+    }
+  }
+
   return (
     <div className="workspaceShell">
       {toast ? <div className={`toast ${toast.tone}`}>{toast.message}</div> : null}
@@ -155,9 +176,14 @@ export default function HistoryWorkspace() {
                     <strong>{notification.payload?.customerName ?? "得意先未設定"} / {notification.payload?.productName ?? "製品未設定"}</strong>
                     {notification.error_message ? <p className="warningText">{notification.error_message}</p> : null}
                   </div>
-                  <button className="linkButton" type="button" onClick={() => toggleMeasurementDetail(notification)} disabled={!setId}>
-                    {formatDateTime(notification.created_at)}
-                  </button>
+                  <div className="notificationActions">
+                    <button className="linkButton" type="button" onClick={() => toggleMeasurementDetail(notification)} disabled={!setId}>
+                      {formatDateTime(notification.created_at)}
+                    </button>
+                    <button className="danger compactButton" type="button" onClick={() => deleteNotification(notification)}>
+                      削除
+                    </button>
+                  </div>
                 </div>
                 {expandedSetId === setId ? (
                   <div className="measurementDetail">
